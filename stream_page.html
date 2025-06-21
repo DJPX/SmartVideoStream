@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Videostream</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    #stream { max-width: 100%; height: auto; border: 1px solid #ccc; }
+    #controls { margin-top: 10px; }
+    button, select { font-size: 1rem; padding: 0.5em; margin: 0.5em; }
+  </style>
+</head>
+<body>
+  <h1>Videostream</h1>
+  <div id="videoContainer">
+    <!-- Stream-Bild wird hier geladen -->
+    <img id="stream" src="" alt="Videostream nicht aktiv" />
+  </div>
+
+  <div id="controls">
+    <button id="toggleBtn">Start Stream</button>
+    <select id="modeSelect">
+      <option value="" disabled selected>Modus wählen</option>
+      <!-- Beispieloptionen: -->
+      <option value="1">CSI-Kamera: Pi Camera Module (640×480 @15fps)</option>
+      <option value="2">USB-Kamera: MJPG 1280×720 @30fps</option>
+      <option value="3">USB-Kamera: MJPG 640×360 @30fps</option>
+      <option value="4">USB-Kamera: YUYV 640×480 @30fps</option>
+      <!-- Weitere Optionen ergänzen nach Bedarf -->
+    </select>
+  </div>
+
+  <script>
+    let streaming = false;
+    const toggleBtn = document.getElementById('toggleBtn');
+    const streamImg = document.getElementById('stream');
+    const modeSelect = document.getElementById('modeSelect');
+
+    function updateStreamSrc() {
+      // Stream-URL, /stream kann per Proxy auf localhost:8080 umgeleitet werden
+      streamImg.src = '/stream?mode=' + modeSelect.value;
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      if (!modeSelect.value) {
+        alert('Bitte zuerst einen Modus auswählen.');
+        return;
+      }
+      if (!streaming) {
+        fetch('/api/start?mode=' + modeSelect.value)
+          .then(res => {
+            if (res.ok) {
+              streaming = true;
+              toggleBtn.textContent = 'Stop Stream';
+              updateStreamSrc();
+            } else {
+              alert('Fehler beim Starten des Streams');
+            }
+          });
+      } else {
+        fetch('/api/stop')
+          .then(res => {
+            if (res.ok) {
+              streaming = false;
+              toggleBtn.textContent = 'Start Stream';
+              streamImg.src = '';
+            } else {
+              alert('Fehler beim Stoppen des Streams');
+            }
+          });
+      }
+    });
+
+    modeSelect.addEventListener('change', () => {
+      if (streaming) {
+        fetch('/api/mode?mode=' + modeSelect.value)
+          .then(res => {
+            if (res.ok) {
+              updateStreamSrc();
+            } else {
+              alert('Fehler beim Wechseln des Modus');
+            }
+          });
+      }
+    });
+  </script>
+</body>
+</html>
