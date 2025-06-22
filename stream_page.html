@@ -22,12 +22,6 @@
     <button id="toggleBtn">Start Stream</button>
     <select id="modeSelect">
       <option value="" disabled selected>Modus wählen</option>
-      <!-- Beispieloptionen: -->
-      <option value="1">CSI-Kamera: Pi Camera Module (640×480 @15fps)</option>
-      <option value="2">USB-Kamera: MJPG 1280×720 @30fps</option>
-      <option value="3">USB-Kamera: MJPG 640×360 @30fps</option>
-      <option value="4">USB-Kamera: YUYV 640×480 @30fps</option>
-      <!-- Weitere Optionen ergänzen nach Bedarf -->
     </select>
   </div>
 
@@ -36,6 +30,18 @@
     const toggleBtn = document.getElementById('toggleBtn');
     const streamImg = document.getElementById('stream');
     const modeSelect = document.getElementById('modeSelect');
+
+    // Lade verfügbare Modi von der API
+    fetch('/api/options')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(opt => {
+          const el = document.createElement('option');
+          el.value = opt.id;
+          el.textContent = opt.label;
+          modeSelect.appendChild(el);
+        });
+      });
 
     function updateStreamSrc() {
       // Stream-URL, /stream kann per Proxy auf localhost:8080 umgeleitet werden
